@@ -4,10 +4,11 @@ public class Main {
 
 	public static void main(String[] args) {
 		CreatePemKeys pemKeysGenerator = new CreatePemKeys();
-		pemKeysGenerator.createPemKeys("files/Erick-GarciaClientSign");
-		pemKeysGenerator.createPemKeys("files/Erick-GarciaClientEncrypt");
-		pemKeysGenerator.createPemKeys("files/Erick-GarciaServerSign");
-		pemKeysGenerator.createPemKeys("files/Erick-GarciaServerEncrypt");
+		//Comment these lines if you have already generated the pem files and want to test for the CAcertificate
+//		pemKeysGenerator.createPemKeys("files/Erick-GarciaClientSign");
+//		pemKeysGenerator.createPemKeys("files/Erick-GarciaClientEncrypt");
+//		pemKeysGenerator.createPemKeys("files/Erick-GarciaServerSign");
+//		pemKeysGenerator.createPemKeys("files/Erick-GarciaServerEncrypt");
 
 		Encrypt encryptor = new Encrypt();
 		Decrypt decryptor = new Decrypt();
@@ -29,6 +30,9 @@ public class Main {
 		System.out.println("\nVerifying Certificate with Longpre client certificate:");
 		VerifyCert certificateVerifier = new VerifyCert();
 		certificateVerifier.verifyCertificate("files/CApublicKey.pem", "files/client1Certificate.txt");
+		System.out.println("\nVerifying Certificate with local client certificate:");
+		certificateVerifier.verifyCertificate("files/CApublicKey.pem", "files/certificate.txt");
+
 
 	}
 }
