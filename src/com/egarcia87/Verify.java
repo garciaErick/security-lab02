@@ -6,17 +6,17 @@ import java.util.Scanner;
 
 public class Verify {
 
-    public static void main(String[] args) {
-        // Written by Luc Longpre for Computer Security, Spring 2017        
+    public void verify(String pubicKeyFileName) {
+        // Written by Luc Longpre for Computer Security, Spring 2017
         File file;
         PublicKey pubKey;
         String signature;
         String messageSigned = "Hello!";
-        
+
         System.out.println("Verifying the signature of: \""+messageSigned+"\"");
 
         // Read public key from file
-        pubKey = PemUtils.readPublicKey("publicKey.pem");
+        pubKey = PemUtils.readPublicKey(pubicKeyFileName);
 
         // Read signature from file
         try {

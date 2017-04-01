@@ -1,12 +1,19 @@
 package com.egarcia87;
-import java.io.*;
-import java.security.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.io.File;
+import java.io.ObjectInputStream;
+import java.io.PrintWriter;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.util.Base64;
-import javax.crypto.*;
 
 class Encrypt {
 
-    public static void main(String[] args) {
+    public void encrypt(String pubicKeyFileName, String messageToEncrypt) {
         // This program reads a public key from file
         // converts a message string to a byte array,
         // encrypts the message with the public key,
@@ -18,12 +25,11 @@ class Encrypt {
         File file;
         PublicKey pubKey;
         Cipher cipher;
-        String messageToEncrypt = "Computer Security Spring 2017";
         byte[] encryptedByteArray;
         String encryptedString;
 
         // Read public key from file
-        pubKey = PemUtils.readPublicKey("publicKey.pem");
+        pubKey = PemUtils.readPublicKey(pubicKeyFileName);
 
         try {
             cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");

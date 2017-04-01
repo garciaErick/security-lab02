@@ -4,7 +4,7 @@ import java.security.*;
 
 public class CreatePemKeys {
 
-    public static void main(String[] args) {
+    public void createPemKeys(String filePrefix) {
         // This program creates an RSA key pair, 
         // saves the private key in a file in PEM format named privateKey.pem,
         // saves the public key in a file named publickey.pem.
@@ -31,13 +31,13 @@ public class CreatePemKeys {
         PublicKey pubKey = key.getPublic();
 
         try {
-            PemUtils.writePublicKey(pubKey, "publicKey.pem");
+            PemUtils.writePublicKey(pubKey, filePrefix + "Public.pem");
         } catch (FileNotFoundException e) {
             System.out.println("Write Public Key: File not found Exception");
         }
 
         try {
-            PemUtils.writePrivateKey(privKey, "privateKey.pem");
+            PemUtils.writePrivateKey(privKey, filePrefix + "Private.pem");
         } catch (FileNotFoundException e) {
             System.out.println("Write Private Key: File not found Exception");
         }

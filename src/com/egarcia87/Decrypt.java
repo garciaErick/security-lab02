@@ -1,14 +1,18 @@
 package com.egarcia87;
-import java.io.*;
-import java.security.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.io.File;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.util.Base64;
 import java.util.Scanner;
 
-import javax.crypto.*;
-
 class Decrypt {
   
-  public static void main(String[] args) {
+  public void decrypt(String privateKeyFileName, String fileToDecrypt) {
     // This program reads a private key from a file
     // and an encrypted message, decrypts the message
     // and prints it.
@@ -21,11 +25,11 @@ class Decrypt {
     String encryptedString, decryptedString;
     
     // get the private key from file
-    privKey = PemUtils.readPrivateKey("privateKey.pem");
+    privKey = PemUtils.readPrivateKey(privateKeyFileName);
 
     // get the encrypted Message
     try{
-      file = new File("encryptedMessage.txt");
+      file = new File(fileToDecrypt);
       Scanner input = new Scanner(file);
       encryptedString = input.nextLine();
       System.out.println("The encrypted string is: "+encryptedString);

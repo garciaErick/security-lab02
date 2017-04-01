@@ -67,8 +67,8 @@ class VerifyCert {
         } catch (FileNotFoundException e) {
             System.out.println("Problem reading the certificate, "+e);
             return;
-        } 
-        
+        }
+
         // verify the signature
         try {
             // print the actual string that was signed (for verification)

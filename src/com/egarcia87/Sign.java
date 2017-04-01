@@ -5,19 +5,18 @@ import java.util.Base64;
 
 class Sign {
 
-    public static void main(String[] args) {
+    public void sign(String privateKeyFileName, String messageToSign) {
         // Written by Luc Longpre for Computer Security, Spring 2017
-        
+
         File file;
         PrivateKey privKey;
         Signature sig;
-        String messageToSign = "Hello!";
         byte[] signature;
-        
+
         System.out.println("Signing the message: \""+messageToSign+"\"");
 
         // Read private key from file
-        privKey = PemUtils.readPrivateKey("privateKey.pem");
+        privKey = PemUtils.readPrivateKey(privateKeyFileName);
 
         try {
             sig = Signature.getInstance("SHA1withRSA");
