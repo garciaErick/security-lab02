@@ -13,18 +13,18 @@ public class Main {
 		Decrypt decryptor = new Decrypt();
 
 		System.out.println("Encryptor:");
-		encryptor.encrypt("Erick-GarciaClientSignPublic.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
+		encryptor.encrypt("files/Erick-GarciaClientSignPublic.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
 		System.out.println("\nDecryptor:");
-		decryptor.decrypt("Erick-GarciaClientSignPrivate.pem", "encryptedMessage.txt");
+		decryptor.decrypt("files/Erick-GarciaClientSignPrivate.pem", "encryptedMessage.txt");
 
 		Sign signer = new Sign();
 		Verify verifier = new Verify();
 
 		System.out.println("\nSign:");
-		signer.sign("Erick-GarciaClientSignPrivate.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
+		signer.sign("files/Erick-GarciaClientSignPrivate.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
 		System.out.println("\nVerify:");
-		verifier.verify("Erick-GarciaClientSignPublic.pem", "Whatevs");
-		verifier.verify("Erick-GarciaClientSignPublic.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
+		verifier.verify("files/Erick-GarciaClientSignPublic.pem", "Whatevs");
+		verifier.verify("files/Erick-GarciaClientSignPublic.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
 
 		System.out.println("\nVerifying Certificate with Longpre client certificate:");
 		VerifyCert certificateVerifier = new VerifyCert();
