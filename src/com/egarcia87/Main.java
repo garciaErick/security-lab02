@@ -21,6 +21,8 @@ public class Main {
 		System.out.println("\nSign:");
 		signer.sign("Erick-GarciaClientSignPrivate.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
 		System.out.println("\nVerify:");
-		verifier.verify("Erick-GarciaClientSignPublic.pem");
+		verifier.verify("Erick-GarciaClientSignPublic.pem", "Whatevs");
+		verifier.verify("Erick-GarciaClientSignPublic.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
+
 	}
 }

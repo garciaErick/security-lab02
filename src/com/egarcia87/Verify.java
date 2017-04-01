@@ -6,12 +6,11 @@ import java.util.Scanner;
 
 public class Verify {
 
-    public void verify(String pubicKeyFileName) {
+    public void verify(String pubicKeyFileName, String messageSigned) {
         // Written by Luc Longpre for Computer Security, Spring 2017
         File file;
         PublicKey pubKey;
         String signature;
-        String messageSigned = "Hello!";
 
         System.out.println("Verifying the signature of: \""+messageSigned+"\"");
 
