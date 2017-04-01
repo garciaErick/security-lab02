@@ -4,8 +4,10 @@ public class Main {
 
 	public static void main(String[] args) {
 		CreatePemKeys pemKeysGenerator = new CreatePemKeys();
-		pemKeysGenerator.createPemKeys("Erick-GarciaClientSign");
-		pemKeysGenerator.createPemKeys("Erick-GarciaServerEncrypt");
+		pemKeysGenerator.createPemKeys("files/Erick-GarciaClientSign");
+		pemKeysGenerator.createPemKeys("files/Erick-GarciaClientEncrypt");
+		pemKeysGenerator.createPemKeys("files/Erick-GarciaServerSign");
+		pemKeysGenerator.createPemKeys("files/Erick-GarciaServerEncrypt");
 
 		Encrypt encryptor = new Encrypt();
 		Decrypt decryptor = new Decrypt();
@@ -23,6 +25,10 @@ public class Main {
 		System.out.println("\nVerify:");
 		verifier.verify("Erick-GarciaClientSignPublic.pem", "Whatevs");
 		verifier.verify("Erick-GarciaClientSignPublic.pem", "Erick Garcia<egarcia87@miners.utep.edu>, 02/04/2017");
+
+		System.out.println("\nVerifying Certificate with Longpre client certificate:");
+		VerifyCert certificateVerifier = new VerifyCert();
+		certificateVerifier.verifyCertificate("files/CApublicKey.pem", "files/client1Certificate.txt");
 
 	}
 }

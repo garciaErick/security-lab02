@@ -3,5 +3,6 @@
 *.iml
 out
 *.txt
-*.pem
-
+files/*
+!files/CApublicKey.pem
+!files/client1Certificate.txt

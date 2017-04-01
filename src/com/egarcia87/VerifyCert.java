@@ -5,7 +5,7 @@ import java.util.*;
 
 class VerifyCert {
 
-    public static void main(String[] args) {
+    public void verifyCertificate(String caPublicKeyFileName, String certificateFileName) {
         // This program reads a certificate file named certificate.txt
         // and the certificate authority's public key file CApublicKey.pem,
         // parses the certificate for formatting,
@@ -21,13 +21,13 @@ class VerifyCert {
 
         // get the public key of the signer from file
         // Read public key from file
-        pubKey = PemUtils.readPublicKey("CApublicKey.pem");
+        pubKey = PemUtils.readPublicKey(caPublicKeyFileName);
         if (pubKey==null)
             return;
 
         // get the certificate and signature
         try {
-            file = new File("certificate.txt");
+            file = new File(certificateFileName);
             Scanner input = new Scanner(file);
             String line = input.nextLine();
             if (!"-----BEGIN INFORMATION-----".equals(line)) {
