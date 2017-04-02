@@ -6,3 +6,4 @@ out
 files/*
 !files/CApublicKey.pem
 !files/client1Certificate.txt
+randomBytes
