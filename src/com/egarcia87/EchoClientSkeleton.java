@@ -7,10 +7,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.Socket;
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -54,21 +51,27 @@ public class EchoClientSkeleton {
 			String encryptionPublicKeyString = "";
 			String signaturePublicKeyString = "";
 			String signature = "";
+			String tmpContents = "";
 			while (!"-----END SIGNATURE-----".equals(line)) {
+				if ("-----BEGIN PUBLIC KEY-----".equals(line))
+					contents += line + "\r\n";
 				if (!"-----BEGIN PUBLIC KEY-----".equals(line)) {
+					if (!"-----BEGIN SIGNATURE-----".equals(line))
+						contents += line + "\r\n";
 					line = in.readLine();
 				} else {
 					line = in.readLine();
 					while (!"-----END PUBLIC KEY-----".equals(line)) {
-						contents += line;
-						line = in.readLine() ;
+						contents += line + "\r\n";
+						tmpContents += line;
+						line = in.readLine();
 					}
 					if (!gotEncryptionKey) {
-						encryptionPublicKeyString = contents;
+						encryptionPublicKeyString = tmpContents;
 						gotEncryptionKey = true;
 					} else
-						signaturePublicKeyString = contents;
-					contents = "";
+						signaturePublicKeyString = tmpContents;
+					tmpContents = "";
 				}
 				if ("-----BEGIN SIGNATURE-----".equals(line)) {
 					signature = in.readLine();
@@ -79,7 +82,11 @@ public class EchoClientSkeleton {
 			System.out.println("\nSignature \n" + signature);
 			PublicKey encryptionPk = getPublicKey(encryptionPublicKeyString);
 			PublicKey signaturePk = getPublicKey(signaturePublicKeyString);
+			System.out.println("\nContents: \n" + contents);
+			System.out.println("\nVerifying Signature \n" + signature);
+			PublicKey CApk = PemUtils.readPublicKey("files/CApublicKey.pem");
 
+			verifySignature(signature, contents, CApk);
 
 		} catch (IOException e) {
 			System.out.println("problem reading the certificate from server");
@@ -200,7 +207,7 @@ public class EchoClientSkeleton {
 		}
 	}
 
-	private static PublicKey getPublicKey(String publicKeyString){
+	private static PublicKey getPublicKey(String publicKeyString) {
 		PublicKey pKey = null;
 		byte[] keyBytes = Base64.getDecoder().decode(publicKeyString);
 		X509EncodedKeySpec spec
@@ -210,7 +217,25 @@ public class EchoClientSkeleton {
 			pKey = kf.generatePublic(spec);
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			System.out.println("public key recovery exception");
+			return null;
 		}
 		return pKey;
+	}
+
+	private static void verifySignature(String signature, String contents, PublicKey signaturePk) {
+		try {
+			Signature sig = Signature.getInstance("SHA1withRSA");
+			sig.initVerify(signaturePk);
+			sig.update(contents.getBytes());
+			// output the result of the verification
+			// System.out.println("Signature:"+signature);
+			if (sig.verify(Base64.getDecoder().decode(signature))) {
+				System.out.println("Signature verification succeeded");
+			} else {
+				System.out.println("Signature verification failed");
+			}
+		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+			System.out.println("error occurred while trying to verify signature" + e);
+		}
 	}
 }
