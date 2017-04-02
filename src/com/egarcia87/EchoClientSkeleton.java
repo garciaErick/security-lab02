@@ -27,7 +27,7 @@ public class EchoClientSkeleton {
 		ObjectOutputStream objectOutput; // for writing objects to socket
 		Cipher cipheRSA, cipherEnc;
 		byte[] clientRandomBytes;
-		PublicKey[] pkpair = {null,null};
+		PublicKey[] pkpair = {null, null};
 		String signature = "";
 		Socket socket;
 		// Handshake
@@ -84,10 +84,7 @@ public class EchoClientSkeleton {
 			PublicKey signaturePk = getPublicKey(signaturePublicKeyString);
 			pkpair[0] = encryptionPk;
 			pkpair[1] = signaturePk;
-//			System.out.println("\nContents: \n" + contents);
-//			System.out.println("\nVerifying Signature \n" + signature);
 			PublicKey CApk = PemUtils.readPublicKey("files/CApublicKey.pem");
-
 			verifySignature(signature, contents, CApk);
 
 		} catch (IOException e) {
