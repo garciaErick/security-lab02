@@ -54,7 +54,7 @@ public class CryptoMultiEchoServer {
                         = new PrintWriter(
                                 new OutputStreamWriter(incoming.getOutputStream()));
                 // send hello to client
-                out.print("Hello! This is Java MultiEchoServer. ");
+                out.print("Hello! This is Java CryptoMultiEchoServer. ");
                 out.println("Enter BYE to exit.");
                 out.flush();
 
@@ -74,12 +74,23 @@ public class CryptoMultiEchoServer {
                 // get the initialization vector from the client
                 // each client will have a different vector
                 byte[] iv = (byte[]) objectInput.readObject();
-                // we will use AES encryption, CBC chaining and PCS5 block padding
-                Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
                 // generate an AES key derived from randomBytes array
                 SecretKeySpec secretKey = new SecretKeySpec(randomBytes, "AES");
-                // initialize with a specific vector instead of a random one
-                cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+
+                // we will use AES encryption, CBC chaining and PCS5 block padding
+                Cipher decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                // initialize with a specific vector instead of a random one for decryption
+                decryptCipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+
+                // another cipher for encryption with the same type of transformation
+                Cipher encryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                encryptCipher.init(Cipher.ENCRYPT_MODE, secretKey);
+                // the initialization vector was generated randomly
+                iv = encryptCipher.getIV();
+                // transmit the initialization vector to the client
+                // no need to encrypt the initialization vector
+                // send the vector as an object to the client
+                objectOutput.writeObject(iv);
 
                 // keep echoing the strings received until
                 // receiving the string "BYE" which will break
@@ -88,17 +99,20 @@ public class CryptoMultiEchoServer {
                     // get the encrypted bytes from the client as an object
                     byte[] encryptedByte = (byte[]) objectInput.readObject();
                     // decrypt the bytes
-                    String str = new String(cipher.doFinal(encryptedByte));
-                    // reply to the client with an echo of the string
-                    // this reply is not encrypted, you need to modify this
-                    // by encrypting the reply
-                    out.println("Echo: " + str);
-                    out.flush();
+                    String str = new String(decryptCipher.doFinal(encryptedByte));
                     // print the message received from the client
                     System.out.println("Received from session " + id + ": " + str);
                     if (str.trim().equals("BYE")) {
+                        //the client already closed the connection, give no reply
                         break;
                     }
+                    // reply to the client with an echo of the string
+                    str = "Echo: " + str;
+                    // Encrypt the message
+                    encryptedByte = encryptCipher.doFinal(str.getBytes());
+                    // Send encrypted message as an object to the client
+                    objectOutput.writeObject(encryptedByte);
+
                 }
                 System.out.println("Session " + id + " ended.");
                 incoming.close();
