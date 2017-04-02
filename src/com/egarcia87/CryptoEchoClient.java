@@ -43,19 +43,27 @@ public class CryptoEchoClient {
                 System.out.println("problem reading the randomBytes file");
                 return;
             }
+            // generate an AES key derived from randomBytes array
+            SecretKeySpec secretKey = new SecretKeySpec(randomBytes, "AES");
+
             // we will use AES encryption, CBC chaining and PCS5 block padding
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            // generate an AES key derived from randomBytes array
-            SecretKeySpec secretKey = new SecretKeySpec(randomBytes, "AES");                
             cipher.init(Cipher.ENCRYPT_MODE, secretKey);
             // the initialization vector was generated randomly
             // transmit the initialization vector to the server
             // no need to encrypt the initialization vector
             // send the vector as an object
             byte[] iv = cipher.getIV();           
-            objectOutput.writeObject(iv); 
-            
-            System.out.println("Starting messages to the server. Type messages, type BYE to end");            
+            objectOutput.writeObject(iv);
+
+            // get the initialization vector for decryption from the server
+            iv = (byte[]) objectInput.readObject();
+            // another cipher decryption with the same type of transformation
+            Cipher decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            // initialize with a specific vector instead of a random one
+            decryptCipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+
+            System.out.println("Starting messages to the server. Type messages, type BYE to end");
             boolean done = false;
             while (!done) {
                 // Read message from the user
@@ -70,8 +78,12 @@ public class CryptoEchoClient {
                     done = true;
                 } else {
                     // Receive the reply from the server and print it
-                    // You need to modify this to handle encrypted reply
-                    System.out.println(in.readLine());
+                    // get the encrypted bytes from the server as an object
+                    encryptedByte = (byte[]) objectInput.readObject();
+                    // decrypt the bytes
+                    String str = new String(decryptCipher.doFinal(encryptedByte));
+
+                    System.out.println(str);
                 }
             }
         } catch (Exception e) {
