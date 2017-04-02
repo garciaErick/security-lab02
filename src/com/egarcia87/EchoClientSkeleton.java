@@ -27,7 +27,8 @@ public class EchoClientSkeleton {
 		ObjectOutputStream objectOutput; // for writing objects to socket
 		Cipher cipheRSA, cipherEnc;
 		byte[] clientRandomBytes;
-		PublicKey[] pkpair;
+		PublicKey[] pkpair = {null,null};
+		String signature = "";
 		Socket socket;
 		// Handshake
 		try {
@@ -50,7 +51,6 @@ public class EchoClientSkeleton {
 			Boolean gotEncryptionKey = false;
 			String encryptionPublicKeyString = "";
 			String signaturePublicKeyString = "";
-			String signature = "";
 			String tmpContents = "";
 			while (!"-----END SIGNATURE-----".equals(line)) {
 				if ("-----BEGIN PUBLIC KEY-----".equals(line))
@@ -77,13 +77,15 @@ public class EchoClientSkeleton {
 					signature = in.readLine();
 				}
 			}
-			System.out.println("Encryption Pk\n" + encryptionPublicKeyString);
-			System.out.println("\nSignature Pk\n" + signaturePublicKeyString);
-			System.out.println("\nSignature \n" + signature);
+//			System.out.println("Encryption Pk\n" + encryptionPublicKeyString);
+//			System.out.println("\nSignature Pk\n" + signaturePublicKeyString);
+//			System.out.println("\nSignature \n" + signature);
 			PublicKey encryptionPk = getPublicKey(encryptionPublicKeyString);
 			PublicKey signaturePk = getPublicKey(signaturePublicKeyString);
-			System.out.println("\nContents: \n" + contents);
-			System.out.println("\nVerifying Signature \n" + signature);
+			pkpair[0] = encryptionPk;
+			pkpair[1] = signaturePk;
+//			System.out.println("\nContents: \n" + contents);
+//			System.out.println("\nVerifying Signature \n" + signature);
 			PublicKey CApk = PemUtils.readPublicKey("files/CApublicKey.pem");
 
 			verifySignature(signature, contents, CApk);
@@ -95,7 +97,7 @@ public class EchoClientSkeleton {
 
 		try {
 			// read and send certificate to server
-			File file = new File("client1Certificate.txt");
+			File file = new File("files/certificate.txt");
 			Scanner input = new Scanner(file);
 			String line;
 			while (input.hasNextLine()) {
@@ -116,6 +118,11 @@ public class EchoClientSkeleton {
 			// receive signature of hash of random bytes from server
 			byte[] signatureBytes = (byte[]) objectInput.readObject();
 			// will need to verify the signature and decrypt the random bytes
+
+			Decrypt decryptor = new Decrypt();
+			decryptor.decrypt("files/Erick-GarciaClientEncryptPrivate.pem", encryptedBytes);
+			Verify verifier = new Verify();
+			verifier.verify(pkpair[1], signature, signatureBytes);
 
 		} catch (IOException | ClassNotFoundException ex) {
 			System.out.println("Problem with receiving random bytes from server");
