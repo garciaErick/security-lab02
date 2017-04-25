@@ -43,7 +43,7 @@ public class Verify {
 		}
 	}
 
-	public void verify(PublicKey pubKey, String signature, byte[] signatureBytes) {
+	public void verify(PublicKey pubKey, byte[] messageToBeVerified, byte[] signatureBytes) {
 		/*
 		*	initialize the Signature object with the certificate of the issuer,
 		*	call update() with all the bytes of the message,
@@ -53,8 +53,8 @@ public class Verify {
 		try {
 			Signature sig = Signature.getInstance("SHA256withRSA");
 			sig.initVerify(pubKey);
-			sig.update(signatureBytes);
-			if (sig.verify(Base64.getDecoder().decode(signature))) {
+			sig.update(messageToBeVerified);
+			if (sig.verify(signatureBytes)) {
 				System.out.println("Signature verification succeeded");
 			} else {
 				System.out.println("Signature verification failed");

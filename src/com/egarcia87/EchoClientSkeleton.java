@@ -20,7 +20,7 @@ public class EchoClientSkeleton {
 	// This version used for Computer Security, Spring 2017.
 	public static void main(String[] args) {
 
-		String host = "172.19.152.11";
+		String host = "172.19.154.68";
 		BufferedReader in; // for reading strings from socket
 		PrintWriter out;   // for writing strings to socket
 		ObjectInputStream objectInput;   // for reading objects from socket
@@ -117,9 +117,11 @@ public class EchoClientSkeleton {
 			// will need to verify the signature and decrypt the random bytes
 
 			Decrypt decryptor = new Decrypt();
-			decryptor.decrypt("files/Erick-GarciaClientEncryptPrivate.pem", encryptedBytes);
+			byte[] decryptedBytes = decryptor.decrypt1("files/Garcia_PalominoClientEncryptPrivate.pem", encryptedBytes);
 			Verify verifier = new Verify();
-			verifier.verify(pkpair[1], signature, signatureBytes);
+			//pkpair[1] = signature Public key
+//			verifier.verify(pkpair[1], signature, encryptedBytes);
+			verifier.verify(pkpair[1], decryptedBytes, signatureBytes);
 
 		} catch (IOException | ClassNotFoundException ex) {
 			System.out.println("Problem with receiving random bytes from server");
