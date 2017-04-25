@@ -117,12 +117,14 @@ public class EchoClientSkeleton {
 			// will need to verify the signature and decrypt the random bytes
 
 			Decrypt decryptor = new Decrypt();
-			byte[] decryptedBytes = decryptor.decrypt1("files/Garcia_PalominoClientEncryptPrivate.pem", encryptedBytes);
-			Verify verifier = new Verify();
-			//pkpair[1] = signature Public key
+			byte[] decryptedBytes = decryptor.getDecryptedBytes("files/Garcia_PalominoClientEncryptPrivate.pem", encryptedBytes);
+			
 			Sha256Generator sha256Generator = new Sha256Generator();
 			byte[] hashedDecryptedBytes = sha256Generator.getHash(decryptedBytes);
-			verifier.verify(pkpair[1], hashedDecryptedBytes 	, signatureBytes);
+
+			PublicKey signaturePk = pkpair[1];
+			Verify verifier = new Verify();
+			verifier.verify(signaturePk, hashedDecryptedBytes 	, signatureBytes);
 
 		} catch (IOException | ClassNotFoundException ex) {
 			System.out.println("Problem with receiving random bytes from server");

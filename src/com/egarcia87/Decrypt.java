@@ -74,7 +74,7 @@ class Decrypt {
 		}
 	}
 
-	public byte[] decrypt1(String privateKeyFileName, byte[] encryptedBytes) {
+	public byte[] getDecryptedBytes(String privateKeyFileName, byte[] encryptedBytes) {
 		PrivateKey privKey;
 		Cipher cipher;
 		byte[] decryptedByteArray;
