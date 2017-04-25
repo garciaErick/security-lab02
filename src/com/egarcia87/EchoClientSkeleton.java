@@ -18,7 +18,7 @@ public class EchoClientSkeleton {
 	// This code includes socket code originally written
 	// by Dr. Yoonsik Cheon at least 10 years ago.
 	// This version used for Computer Security, Spring 2017.
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 
 		String host = "172.19.154.68";
 		BufferedReader in; // for reading strings from socket
@@ -120,8 +120,9 @@ public class EchoClientSkeleton {
 			byte[] decryptedBytes = decryptor.decrypt1("files/Garcia_PalominoClientEncryptPrivate.pem", encryptedBytes);
 			Verify verifier = new Verify();
 			//pkpair[1] = signature Public key
-//			verifier.verify(pkpair[1], signature, encryptedBytes);
-			verifier.verify(pkpair[1], decryptedBytes, signatureBytes);
+			Sha256Generator sha256Generator = new Sha256Generator();
+			byte[] hashedDecryptedBytes = sha256Generator.getHash(decryptedBytes);
+			verifier.verify(pkpair[1], hashedDecryptedBytes 	, signatureBytes);
 
 		} catch (IOException | ClassNotFoundException ex) {
 			System.out.println("Problem with receiving random bytes from server");

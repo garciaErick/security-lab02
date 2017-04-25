@@ -49,9 +49,9 @@ public class Verify {
 		*	call update() with all the bytes of the message,
 		* call verify() with the bytes of the signature
 		 */
-		System.out.println("Verifying the signature of: \"" + signatureBytes + "\"");
+		System.out.println("Verifying the bytes signature of: \"" + signatureBytes + "\"");
 		try {
-			Signature sig = Signature.getInstance("SHA256withRSA");
+			Signature sig = Signature.getInstance("SHA1withRSA");
 			sig.initVerify(pubKey);
 			sig.update(messageToBeVerified);
 			if (sig.verify(signatureBytes)) {
