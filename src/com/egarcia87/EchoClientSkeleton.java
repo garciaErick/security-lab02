@@ -27,7 +27,7 @@ public class EchoClientSkeleton {
 		PrintWriter out;   // for writing strings to socket
 		ObjectInputStream objectInput;   // for reading objects from socket
 		ObjectOutputStream objectOutput; // for writing objects to socket
-		Cipher cipherDec, cipherEnc;
+		Cipher decryptCipher, encryptCipher;
 		byte[] clientRandomBytes;
 		byte[] serverRandomBytes;
 		PublicKey[] pkpair = {null, null};
@@ -80,16 +80,13 @@ public class EchoClientSkeleton {
 					signature = in.readLine();
 				}
 			}
-//			System.out.println("Encryption Pk\n" + encryptionPublicKeyString);
-//			System.out.println("\nSignature Pk\n" + signaturePublicKeyString);
-//			System.out.println("\nSignature \n" + signature);
+
 			PublicKey encryptionPk = getPublicKey(encryptionPublicKeyString);
 			PublicKey signaturePk = getPublicKey(signaturePublicKeyString);
 			pkpair[0] = encryptionPk;
 			pkpair[1] = signaturePk;
 			PublicKey CApk = PemUtils.readPublicKey("files/CApublicKey.pem");
 			verifySignature(signature, contents, CApk);
-
 		} catch (IOException e) {
 			System.out.println("problem reading the certificate from server");
 			return;
@@ -117,14 +114,12 @@ public class EchoClientSkeleton {
 			byte[] encryptedBytes = (byte[]) objectInput.readObject();
 			// receive signature of hash of random bytes from server
 			byte[] signatureBytes = (byte[]) objectInput.readObject();
-			// will need to verify the signature and decrypt the random bytes
 
+			// Decrypt and verify
 			Decrypt decryptor = new Decrypt();
 			serverRandomBytes = decryptor.getDecryptedBytes("files/Garcia_PalominoClientEncryptPrivate.pem", encryptedBytes);
-			
 			Sha256Generator sha256Generator = new Sha256Generator();
 			byte[] hashedDecryptedBytes = sha256Generator.getHash(serverRandomBytes);
-
 			Verify verifier = new Verify();
 			verifier.verify(pkpair[1], hashedDecryptedBytes, signatureBytes);
 		} catch (IOException | ClassNotFoundException ex) {
@@ -136,41 +131,47 @@ public class EchoClientSkeleton {
 		clientRandomBytes = new byte[8];
 		new Random().nextBytes(clientRandomBytes);
 		try {
+			// Encrypt and send random bytes
 			Encrypt encryptor = new Encrypt();
 			byte[] encryptedBytes = encryptor.getEncryptedBytes(pkpair[0], clientRandomBytes);
 			objectOutput.writeObject(encryptedBytes);
 
+			// Create and send signature of hashed random bytes
 			Sha256Generator sha256Generator = new Sha256Generator();
 			byte [] hashedBytes = sha256Generator.getHash(clientRandomBytes);
 			byte[] signatureBytes = Sign.getSignature("files/Garcia_PalominoClientSignPrivate.pem", hashedBytes);
 			objectOutput.writeObject(signatureBytes);
 
-			System.out.println("Shared secret sent.");
+			System.out.println("Shared secret part sent.");
 		} catch (IOException e) {
 			System.out.println("error computing or sending the signature for random bytes");
 			return;
 		}
 
-		// initialize the shared secret with all zeroes
-		// will need to generate from a combination of the server and
-		// the client random bytes generated
+		// Build the shared secret with the server Random Bytes as the first half
+		// and the client random bytes as the second half
 		byte[] sharedSecret = new byte[16];
 		System.arraycopy(serverRandomBytes, 0, sharedSecret, 0, 8);
 		System.arraycopy(clientRandomBytes, 0, sharedSecret, 8, 8);
 		try {
+			// Create AES key with shared secret
 			SecretKeySpec secretKey = new SecretKeySpec(sharedSecret, "AES");
 
-			cipherDec = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			// Create cipher for decryption
+			decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			// get the initialization vector for decryption from the server
 			byte[] iv = (byte[]) objectInput.readObject();
-			// initialize with a specific vector instead of a random one
-			cipherDec.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+			// initialize with the server's iv
+			decryptCipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
 
-			cipherEnc = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			// generate an AES key derived from randomBytes array
-			cipherEnc.init(Cipher.ENCRYPT_MODE, secretKey);
-			iv = cipherEnc.getIV();
+			// Create cipher for encryption
+			encryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			// Initialize with random iv
+			encryptCipher.init(Cipher.ENCRYPT_MODE, secretKey);
+			// Send the random iv to the server for decryption
+			iv = encryptCipher.getIV();
 			objectOutput.writeObject(iv);
+
 			System.out.println("Ciphers initiated.");
 		} catch (IOException | NoSuchAlgorithmException
 				| NoSuchPaddingException | InvalidKeyException e) {
@@ -182,24 +183,24 @@ public class EchoClientSkeleton {
 			// Encrypted communication
 			System.out.println("Starting messages to the server. Type messages, type BYE to end");
 			Scanner userInput = new Scanner(System.in);
-			boolean done = false;
-			while (!done) {
+
+			for(;;){
 				// Read message from the user
 				String userStr = userInput.nextLine();
 				// Encrypt the message
-				byte[] encryptedBytes = cipherEnc.doFinal(userStr.getBytes());
+				byte[] encryptedBytes = encryptCipher.doFinal(userStr.getBytes());
 				// Send encrypted message as an object to the server
 				objectOutput.writeObject(encryptedBytes);
 				// If user says "BYE", end session
 				if (userStr.trim().equals("BYE")) {
 					System.out.println("client session ended");
-					done = true;
+					break;
 				} else {
 					// Wait for reply from server,
 					encryptedBytes = (byte[]) objectInput.readObject();
 
-					String str = new String(cipherDec.doFinal(encryptedBytes));
-
+					// Decrypt the message
+					String str = new String(decryptCipher.doFinal(encryptedBytes));
 					System.out.println(str);
 				}
 			}
