@@ -1,4 +1,6 @@
 package com.egarcia87;
+import com.sun.org.apache.xml.internal.resolver.helpers.PublicId;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -53,5 +55,25 @@ class Encrypt {
         } catch (Exception e) {
             System.out.println("Could not create encryptedMessage file");
         }
+    }
+
+    public byte[] getEncryptedBytes(PublicKey pubKey, byte[] message) {
+        Cipher cipher;
+        byte[] encryptedByteArray;
+
+        // get the public key from file
+        System.out.println("The string to encrypt is: " + message);
+
+        // decrypt string with public key
+        try {
+            cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+            encryptedByteArray = cipher.doFinal(message);
+            System.out.println("The encrypted bytes is: " + encryptedByteArray);
+            return encryptedByteArray;
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            System.out.println("error while decrypting the message");
+        }
+        return null;
     }
 }

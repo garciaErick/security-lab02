@@ -34,4 +34,29 @@ class Sign {
             System.out.println("Could not create signature file");
         }
     }
+
+    public static byte[] getSignature(String privateKeyFileName, byte[] messageToSign) {
+        // Written by Luc Longpre for Computer Security, Spring 2017
+
+        File file;
+        PrivateKey privKey;
+        Signature sig;
+        byte[] signature;
+
+        System.out.println("Signing the message: \""+messageToSign+"\"");
+
+        // Read private key from file
+        privKey = PemUtils.readPrivateKey(privateKeyFileName);
+
+        try {
+            sig = Signature.getInstance("SHA1withRSA");
+            sig.initSign(privKey);
+            sig.update(messageToSign);
+            signature = sig.sign();
+            return signature;
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            System.out.println("Error attempting to sign");
+            return null;
+        }
+    }
 }

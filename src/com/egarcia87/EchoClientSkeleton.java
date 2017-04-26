@@ -4,6 +4,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.Socket;
@@ -12,6 +13,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Scanner;
+import java.util.Random;
 
 @SuppressWarnings("Duplicates")
 public class EchoClientSkeleton {
@@ -25,8 +27,9 @@ public class EchoClientSkeleton {
 		PrintWriter out;   // for writing strings to socket
 		ObjectInputStream objectInput;   // for reading objects from socket
 		ObjectOutputStream objectOutput; // for writing objects to socket
-		Cipher cipheRSA, cipherEnc;
+		Cipher cipherDec, cipherEnc;
 		byte[] clientRandomBytes;
+		byte[] serverRandomBytes;
 		PublicKey[] pkpair = {null, null};
 		String signature = "";
 		Socket socket;
@@ -117,76 +120,64 @@ public class EchoClientSkeleton {
 			// will need to verify the signature and decrypt the random bytes
 
 			Decrypt decryptor = new Decrypt();
-			byte[] decryptedBytes = decryptor.getDecryptedBytes("files/Garcia_PalominoClientEncryptPrivate.pem", encryptedBytes);
+			serverRandomBytes = decryptor.getDecryptedBytes("files/Garcia_PalominoClientEncryptPrivate.pem", encryptedBytes);
 			
 			Sha256Generator sha256Generator = new Sha256Generator();
-			byte[] hashedDecryptedBytes = sha256Generator.getHash(decryptedBytes);
+			byte[] hashedDecryptedBytes = sha256Generator.getHash(serverRandomBytes);
 
-			PublicKey signaturePk = pkpair[1];
 			Verify verifier = new Verify();
-			verifier.verify(signaturePk, hashedDecryptedBytes 	, signatureBytes);
-
+			verifier.verify(pkpair[1], hashedDecryptedBytes, signatureBytes);
 		} catch (IOException | ClassNotFoundException ex) {
 			System.out.println("Problem with receiving random bytes from server");
 			return;
 		}
+
 		// generate random bytes for shared secret
 		clientRandomBytes = new byte[8];
-		// the next line would initialize the byte array to random values
-		// new Random().nextBytes(clientRandomBytes);
-		// here we leave all bytes to zeroes.
-		// The server shifts to testing mode when receiving all byte
-		// values zeroes and uses all zeroes as shared secret
+		new Random().nextBytes(clientRandomBytes);
 		try {
-			// you need to encrypt and send the the random byte array
-			// here, precalculated encrypted bytes using zeroes as shared secret
-			byte[] encryptedBytes = {-101, 122, -50, -56, 68, -30, -48, 115,
-					-52, 116, -40, 43, 121, 77, -44, -89, -10, -35, 38, -45, -64,
-					52, 109, 72, -107, 57, 58, -16, 56, -101, -93, 51, 106, -7, 40,
-					72, -56, 85, -82, -110, -17, -64, 70, 57, 12, 111, -62, 117, 28,
-					48, -78, -84, 80, -69, 86, -14, 120, -99, -96, -69, -13, -49,
-					-92, -19, 1, 81, -57, 29, -5, -19, 125, 7, 13, -128, 62, 7, -6,
-					66, 77, -124, 127, -95, -76, -85, -80, -13, -113, 91, 53, 59,
-					19, 86, -1, -14, 23, 2, 127, 76, -24, -117, 76, -108, 11, -78,
-					-64, -94, -51, 13, -9, -44, -96, -23, -55, 22, -79, -23, -36,
-					42, -60, -55, -2, -52, -52, 39, -94, 53, 81, 58};
+			Encrypt encryptor = new Encrypt();
+			byte[] encryptedBytes = encryptor.getEncryptedBytes(pkpair[0], clientRandomBytes);
 			objectOutput.writeObject(encryptedBytes);
-			// you need to generate a signature of the hash of the random bytes
-			// here, precalculated signature using the client secret key associated with the certificate
-			byte[] signatureBytes = {48, 17, -50, -3, 125, -10, -88, -6, -33,
-					10, 14, 93, 112, 14, 74, -32, -27, -56, -86, 91, -101, 87, 117,
-					109, 41, 1, 6, -4, -94, 47, 83, -46, 44, 76, 61, 83, 72, 36,
-					-127, -44, 5, -77, 121, 19, 107, 91, -123, 31, 123, -22, 114,
-					-79, 103, 39, 122, -122, 73, -99, -16, 22, 20, 37, 27, 14, 31,
-					11, 36, 12, -118, 38, 120, 47, 57, -110, -27, -14, 31, -37, 85,
-					-56, -108, 100, -71, 29, 26, 26, 8, -47, 49, -66, 88, 6, 73,
-					124, -35, 9, 16, 59, 44, -113, 62, -61, -31, 58, -116, 113, 35,
-					119, 5, -117, -91, -109, -8, 123, -40, -105, -96, -71, -50, 41,
-					78, -113, -32, -75, 36, -29, 89, -51};
+
+			Sha256Generator sha256Generator = new Sha256Generator();
+			byte [] hashedBytes = sha256Generator.getHash(clientRandomBytes);
+			byte[] signatureBytes = Sign.getSignature("files/Garcia_PalominoClientSignPrivate.pem", hashedBytes);
 			objectOutput.writeObject(signatureBytes);
+
+			System.out.println("Shared secret sent.");
 		} catch (IOException e) {
 			System.out.println("error computing or sending the signature for random bytes");
 			return;
 		}
+
 		// initialize the shared secret with all zeroes
 		// will need to generate from a combination of the server and
 		// the client random bytes generated
 		byte[] sharedSecret = new byte[16];
-		//System.arraycopy(serverRandomBytes, 0, sharedSecret, 0, 8);
-		//System.arraycopy(clientRandomBytes, 8, sharedSecret, 8, 8);
+		System.arraycopy(serverRandomBytes, 0, sharedSecret, 0, 8);
+		System.arraycopy(clientRandomBytes, 0, sharedSecret, 8, 8);
 		try {
-			// we will use AES encryption, CBC chaining and PCS5 block padding
+			SecretKeySpec secretKey = new SecretKeySpec(sharedSecret, "AES");
+
+			cipherDec = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			// get the initialization vector for decryption from the server
+			byte[] iv = (byte[]) objectInput.readObject();
+			// initialize with a specific vector instead of a random one
+			cipherDec.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+
 			cipherEnc = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			// generate an AES key derived from randomBytes array
-			SecretKeySpec secretKey = new SecretKeySpec(sharedSecret, "AES");
 			cipherEnc.init(Cipher.ENCRYPT_MODE, secretKey);
-			byte[] iv = cipherEnc.getIV();
+			iv = cipherEnc.getIV();
 			objectOutput.writeObject(iv);
+			System.out.println("Ciphers initiated.");
 		} catch (IOException | NoSuchAlgorithmException
 				| NoSuchPaddingException | InvalidKeyException e) {
 			System.out.println("error setting up the AES encryption");
 			return;
 		}
+
 		try {
 			// Encrypted communication
 			System.out.println("Starting messages to the server. Type messages, type BYE to end");
@@ -206,8 +197,10 @@ public class EchoClientSkeleton {
 				} else {
 					// Wait for reply from server,
 					encryptedBytes = (byte[]) objectInput.readObject();
-					// will need to decrypt and print the reply to the screen
-					System.out.println("Encrypted echo received, but not decrypted");
+
+					String str = new String(cipherDec.doFinal(encryptedBytes));
+
+					System.out.println(str);
 				}
 			}
 		} catch (IllegalBlockSizeException | BadPaddingException
